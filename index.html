@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Редактор карт для GTA-подобной игры</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <!-- Панель инструментов -->
+  <div class="toolbar">
+    <div class="toolbar-sections">
+      <section class="section">
+        <h2>Палитра тайлов</h2>
+        <div class="tile-palette" id="tilePalette"></div>
+      </section>
+
+      <section class="section">
+        <h2>Транспорт</h2>
+        <div class="transport-controls">
+          <button id="rotateLeft" title="Повернуть налево">↶</button>
+          <select id="transportDirection" title="Направление транспорта">
+            <option value="0">Вверх</option>
+            <option value="1">Вправо</option>
+            <option value="2">Вниз</option>
+            <option value="3">Влево</option>
+          </select>
+          <button id="rotateRight" title="Повернуть направо">↷</button>
+        </div>
+        <div class="transport-palette" id="transportPalette"></div>
+      </section>
+
+      <section class="section">
+        <h2>Триггеры</h2>
+        <div class="triggers-palette" id="triggersPalette"></div>
+      </section>
+
+      <section class="section">
+        <h2>Структуры</h2>
+        <div class="structures-palette" id="structuresPalette"></div>
+      </section>
+
+      <section class="section">
+        <h2>Инструменты</h2>
+        <div class="tools">
+          <button id="brush" class="active" title="Кисть (Ctrl+B)">Кисть</button>
+          <button id="fill" title="Заливка (Ctrl+F)">Заливка</button>
+          <button id="erase" title="Ластик (Ctrl+E)">Ластик</button>
+          <button id="structure" title="Структуры (Ctrl+S)">Структуры</button>
+          <button id="transport" title="Транспорт (Ctrl+T)">Транспорт</button>
+          <button id="select" title="Выделение (Ctrl+G)">Выделение</button>
+        </div>
+
+        <div class="file-controls">
+          <input type="file" id="loadMap" accept=".json" style="display: none;">
+          <button id="loadMapBtn">Загрузить карту</button>
+          <button id="saveMap">Сохранить карту</button>
+          <button id="exportImage">Экспорт в PNG</button>
+        </div>
+
+        <div class="map-info">
+          <h3>Размер карты</h3>
+          <div class="size-controls">
+            <div>
+              <label>Ширина:</label>
+              <input type="number" id="width" value="50" min="10" max="200">
+            </div>
+            <div>
+              <label>Высота:</label>
+              <input type="number" id="height" value="50" min="10" max="200">
+            </div>
+            <button id="resize">Изменить</button>
+          </div>
+        </div>
+        <div class="selected-info" id="selectedInfo">
+          <h3>Выбранный объект</h3>
+          <div id="objectInfo">Нет</div>
+        </div>
+
+        <div class="preview-settings">
+          <h3>Настройки предпросмотра</h3>
+          <label>
+            <input type="checkbox" id="showPreview" checked>
+            Показывать предпросмотр
+          </label>
+          <div class="preview-opacity">
+            <label>Прозрачность:</label>
+            <input type="range" id="previewOpacity" min="10" max="90" value="60">
+            <span id="opacityValue">60%</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Основное поле редактора -->
+  <div class="editor-area">
+    <div class="canvas-container">
+      <canvas id="mapCanvas"></canvas>
+      <canvas id="selectionCanvas"></canvas>
+      <canvas id="gridCanvas"></canvas>
+      <!-- Canvas для предпросмотра будет добавлен динамически -->
+    </div>
+    <div class="status-bar">
+      <div class="coordinates" id="coordinates">X: 0, Y: 0</div>
+      <div class="tool-info" id="toolInfo">Инструмент: Кисть</div>
+      <div class="selection-info" id="selectionInfo">Выделено: 0 объектов</div>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
