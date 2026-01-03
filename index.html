@@ -42,6 +42,11 @@
       </section>
 
       <section class="section">
+        <h2>NPC</h2>
+        <div class="npc-palette" id="npcPalette"></div>
+      </section>
+
+      <section class="section">
         <h2>Инструменты</h2>
         <div class="tools">
           <button id="brush" class="active" title="Кисть (Ctrl+B)">Кисть</button>
@@ -49,7 +54,10 @@
           <button id="erase" title="Ластик (Ctrl+E)">Ластик</button>
           <button id="structure" title="Структуры (Ctrl+S)">Структуры</button>
           <button id="transport" title="Транспорт (Ctrl+T)">Транспорт</button>
+          <button id="npc" title="NPC (Ctrl+N)">NPC</button>
           <button id="select" title="Выделение (Ctrl+G)">Выделение</button>
+          <button id="missions" title="Редактор миссий (Ctrl+M)">Миссии</button>
+          <button id="runGame" title="Запуск игры (Ctrl+R)">Запуск игры</button>
         </div>
 
         <div class="file-controls">
@@ -57,6 +65,7 @@
           <button id="loadMapBtn">Загрузить карту</button>
           <button id="saveMap">Сохранить карту</button>
           <button id="exportImage">Экспорт в PNG</button>
+          <button id="exportGame">Экспорт для игры</button>
         </div>
 
         <div class="map-info">
@@ -73,9 +82,12 @@
             <button id="resize">Изменить</button>
           </div>
         </div>
+
         <div class="selected-info" id="selectedInfo">
           <h3>Выбранный объект</h3>
           <div id="objectInfo">Нет</div>
+          <div id="missionInfo" style="margin-top: 8px; display: none;"></div>
+          <button id="editMissionBtn" style="margin-top: 8px; display: none;">Редактировать миссию</button>
         </div>
 
         <div class="preview-settings">
@@ -106,6 +118,258 @@
       <div class="coordinates" id="coordinates">X: 0, Y: 0</div>
       <div class="tool-info" id="toolInfo">Инструмент: Кисть</div>
       <div class="selection-info" id="selectionInfo">Выделено: 0 объектов</div>
+    </div>
+  </div>
+</div>
+
+<!-- Модальное окно редактора миссий -->
+<div id="missionEditorModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Редактор миссий и квестов</h2>
+      <button class="close-modal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="mission-editor-container">
+        <!-- Левая панель: список миссий -->
+        <div class="missions-list">
+          <div class="missions-header">
+            <h3>Миссии</h3>
+            <button id="newMissionBtn" class="btn-primary">+ Новая миссия</button>
+          </div>
+          <div class="missions-container" id="missionsContainer">
+            <!-- Список миссий будет заполняться динамически -->
+          </div>
+        </div>
+
+        <!-- Правая панель: редактирование миссии -->
+        <div class="mission-edit">
+          <div class="mission-basic-info">
+            <h3>Основная информация</h3>
+            <div class="form-group">
+              <label>ID миссии:</label>
+              <input type="text" id="missionId" readonly>
+            </div>
+            <div class="form-group">
+              <label>Название миссии:</label>
+              <input type="text" id="missionName" placeholder="Введите название миссии">
+            </div>
+            <div class="form-group">
+              <label>Описание:</label>
+              <textarea id="missionDescription" rows="3" placeholder="Опишите миссию для игрока"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Тип миссии:</label>
+              <select id="missionType">
+                <option value="trigger">Триггер активации</option>
+                <option value="collection">Сбор предметов</option>
+                <option value="delivery">Доставка</option>
+                <option value="elimination">Уничтожение</option>
+                <option value="escort">Эскорт</option>
+                <option value="race">Гонка</option>
+                <option value="map_transition">Переход на карту</option>
+                <option value="dialog">Диалог</option>
+                <option value="combination">Комбинированная</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Сложность:</label>
+              <select id="missionDifficulty">
+                <option value="easy">Легкая</option>
+                <option value="normal">Средняя</option>
+                <option value="hard">Сложная</option>
+                <option value="very_hard">Очень сложная</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Время на выполнение (сек):</label>
+              <input type="number" id="missionTimeLimit" min="0" value="0">
+              <small>0 = без ограничения времени</small>
+            </div>
+          </div>
+
+          <div class="mission-triggers">
+            <h3>Триггеры миссии</h3>
+            <div class="form-group">
+              <label>Триггер начала:</label>
+              <select id="missionStartTrigger">
+                <option value="">-- Выберите триггер --</option>
+              </select>
+              <button id="selectStartTriggerBtn" class="btn-small">Выбрать на карте</button>
+            </div>
+            <div class="form-group" id="missionTargetTriggersGroup">
+              <label>Целевые триггеры:</label>
+              <div id="missionTargetTriggersList"></div>
+              <button id="addTargetTriggerBtn" class="btn-small">+ Добавить цель</button>
+            </div>
+            <div class="form-group" id="missionEndTriggerGroup">
+              <label>Триггер завершения:</label>
+              <select id="missionEndTrigger">
+                <option value="">-- Выберите триггер --</option>
+              </select>
+              <button id="selectEndTriggerBtn" class="btn-small">Выбрать на карте</button>
+            </div>
+          </div>
+
+          <div class="mission-objectives">
+            <h3>Цели миссии</h3>
+            <div id="missionObjectivesContainer">
+              <div class="objective-item" data-type="trigger">
+                <div class="objective-header">
+                  <span>📌 Триггер активации</span>
+                  <button class="remove-objective">&times;</button>
+                </div>
+                <div class="objective-content">
+                  <p>Игрок должен активировать триггер</p>
+                </div>
+              </div>
+            </div>
+            <button id="addObjectiveBtn" class="btn-small">+ Добавить цель</button>
+          </div>
+
+          <div class="mission-rewards">
+            <h3>Награды</h3>
+            <div class="form-group">
+              <label>Опыт:</label>
+              <input type="number" id="missionExpReward" min="0" value="100">
+            </div>
+            <div class="form-group">
+              <label>Деньги:</label>
+              <input type="number" id="missionMoneyReward" min="0" value="500">
+            </div>
+            <div class="form-group">
+              <label>Предметы:</label>
+              <div id="missionItemsRewardList"></div>
+              <button id="addItemRewardBtn" class="btn-small">+ Добавить предмет</button>
+            </div>
+            <div class="form-group">
+              <label>Разблокирует:</label>
+              <input type="text" id="missionUnlocks" placeholder="ID новой миссии, оружия и т.д.">
+            </div>
+          </div>
+
+          <div class="mission-dialogs" id="missionDialogsSection">
+            <h3>Диалоги</h3>
+            <div id="missionDialogsList"></div>
+            <button id="addDialogBtn" class="btn-small">+ Добавить диалог</button>
+          </div>
+
+          <div class="mission-map-transition" id="missionMapTransitionSection">
+            <h3>Переход на карту</h3>
+            <div class="form-group">
+              <label>Файл карты:</label>
+              <input type="text" id="missionTargetMap" placeholder="maps/house.json">
+              <button id="browseMapBtn" class="btn-small">Обзор</button>
+            </div>
+            <div class="form-group">
+              <label>Триггер спавна на новой карте:</label>
+              <input type="text" id="missionSpawnTrigger" placeholder="ID триггера спавна">
+            </div>
+            <div class="form-group">
+              <label>Сохранить инвентарь:</label>
+              <input type="checkbox" id="missionKeepInventory" checked>
+            </div>
+          </div>
+
+          <div class="mission-controls">
+            <button id="saveMissionBtn" class="btn-primary">Сохранить миссию</button>
+            <button id="deleteMissionBtn" class="btn-danger">Удалить миссию</button>
+            <button id="testMissionBtn" class="btn-secondary">Тестировать миссию</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Модальное окно диалога -->
+<div id="dialogEditorModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Редактор диалога</h2>
+      <button class="close-modal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Персонаж:</label>
+        <input type="text" id="dialogCharacter" placeholder="Имя персонажа">
+      </div>
+      <div class="form-group">
+        <label>Текст диалога:</label>
+        <textarea id="dialogText" rows="4" placeholder="Текст диалога"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Изображение персонажа:</label>
+        <input type="text" id="dialogImage" placeholder="images/npc.png">
+      </div>
+      <div class="form-group">
+        <label>Варианты ответов:</label>
+        <div id="dialogOptionsList"></div>
+        <button id="addDialogOptionBtn" class="btn-small">+ Добавить вариант</button>
+      </div>
+      <div class="form-group">
+        <label>Триггер после диалога:</label>
+        <select id="dialogTrigger">
+          <option value="">-- Выберите триггер --</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Следующий диалог:</label>
+        <input type="text" id="dialogNext" placeholder="ID следующего диалога">
+      </div>
+      <div class="dialog-controls">
+        <button id="saveDialogBtn" class="btn-primary">Сохранить диалог</button>
+        <button id="cancelDialogBtn" class="btn-secondary">Отмена</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Модальное окно предмета -->
+<div id="itemEditorModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Редактор предмета</h2>
+      <button class="close-modal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Название предмета:</label>
+        <input type="text" id="itemName" placeholder="Имя предмета">
+      </div>
+      <div class="form-group">
+        <label>Тип предмета:</label>
+        <select id="itemType">
+          <option value="weapon">Оружие</option>
+          <option value="ammo">Патроны</option>
+          <option value="health">Здоровье</option>
+          <option value="armor">Броня</option>
+          <option value="key">Ключ</option>
+          <option value="document">Документ</option>
+          <option value="collectible">Коллекционный предмет</option>
+          <option value="money">Деньги</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Количество:</label>
+        <input type="number" id="itemQuantity" min="1" value="1">
+      </div>
+      <div class="form-group">
+        <label>Значение (для оружия - урон):</label>
+        <input type="number" id="itemValue" min="0" value="0">
+      </div>
+      <div class="form-group">
+        <label>Изображение:</label>
+        <input type="text" id="itemImage" placeholder="images/item.png">
+      </div>
+      <div class="form-group">
+        <label>Описание:</label>
+        <textarea id="itemDescription" rows="2" placeholder="Описание предмета"></textarea>
+      </div>
+      <div class="item-controls">
+        <button id="saveItemBtn" class="btn-primary">Сохранить предмет</button>
+        <button id="cancelItemBtn" class="btn-secondary">Отмена</button>
+      </div>
     </div>
   </div>
 </div>

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GTA-подобная игра</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #0a0a0a;
+      color: white;
+      overflow: hidden;
+    }
+
+    #gameContainer {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #gameCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      background: #000;
+    }
+
+    #ui {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    .ui-element {
+      position: absolute;
+      pointer-events: auto;
+    }
+
+    #playerStats {
+      top: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
+    #missionInfo {
+      top: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 10px;
+      border-radius: 5px;
+      max-width: 300px;
+      font-size: 14px;
+    }
+
+    .dialog-box {
+      position: absolute;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.9);
+      padding: 20px;
+      border-radius: 10px;
+      width: 600px;
+      max-width: 90%;
+      border: 2px solid #4dabf7;
+      display: none;
+    }
+
+    .dialog-character {
+      color: #4dabf7;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .dialog-text {
+      margin-bottom: 15px;
+      line-height: 1.5;
+    }
+
+    .dialog-options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .dialog-option {
+      background: #333;
+      padding: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .dialog-option:hover {
+      background: #444;
+    }
+
+    #inventory {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 10px;
+      border-radius: 5px;
+      display: none;
+    }
+
+    #minimap {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 5px;
+      padding: 5px;
+    }
+
+    #pauseMenu {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .pause-menu-content {
+      background: #1a1a2e;
+      padding: 30px;
+      border-radius: 10px;
+      width: 400px;
+      text-align: center;
+    }
+
+    .pause-menu-content h2 {
+      color: #4dabf7;
+      margin-bottom: 20px;
+    }
+
+    .pause-menu-button {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      background: #2d2d44;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .pause-menu-button:hover {
+      background: #3d3d54;
+    }
+
+    .loading-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+    }
+
+    .loading-progress {
+      width: 300px;
+      height: 20px;
+      background: #333;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .loading-bar {
+      height: 100%;
+      background: #4dabf7;
+      width: 0%;
+      transition: width 0.3s;
+    }
+
+    .mission-marker {
+      position: absolute;
+      color: yellow;
+      font-weight: bold;
+      text-shadow: 2px 2px 2px black;
+      z-index: 50;
+    }
+  </style>
+</head>
+<body>
+<div id="gameContainer">
+  <canvas id="gameCanvas"></canvas>
+
+  <div id="ui">
+    <div id="playerStats" class="ui-element">
+      <div>Здоровье: <span id="health">100</span></div>
+      <div>Броня: <span id="armor">0</span></div>
+      <div>Деньги: $<span id="money">0</span></div>
+      <div>Опыт: <span id="exp">0</span></div>
+    </div>
+
+    <div id="missionInfo" class="ui-element" style="display: none;">
+      <div id="missionTitle"></div>
+      <div id="missionDesc"></div>
+      <div id="missionObjectives"></div>
+      <div id="missionTimer"></div>
+    </div>
+
+    <div id="minimap" class="ui-element">
+      <canvas id="minimapCanvas" width="200" height="200"></canvas>
+    </div>
+
+    <div id="inventory" class="ui-element"></div>
+
+    <div id="dialogBox" class="dialog-box ui-element"></div>
+  </div>
+
+  <div id="pauseMenu">
+    <div class="pause-menu-content">
+      <h2>ПАУЗА</h2>
+      <button class="pause-menu-button" id="resumeGame">Продолжить игру</button>
+      <button class="pause-menu-button" id="saveGame">Сохранить игру</button>
+      <button class="pause-menu-button" id="loadGame">Загрузить игру</button>
+      <button class="pause-menu-button" id="settings">Настройки</button>
+      <button class="pause-menu-button" id="quitGame">Выйти в редактор</button>
+    </div>
+  </div>
+
+  <div class="loading-screen" id="loadingScreen">
+    <div>
+      <h2>Загрузка игры...</h2>
+      <div class="loading-progress">
+        <div class="loading-bar" id="loadingBar"></div>
+      </div>
+      <div id="loadingText">Загрузка карты...</div>
+    </div>
+  </div>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>
